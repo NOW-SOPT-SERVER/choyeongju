@@ -3,6 +3,7 @@ package org.sopt.practice.common.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.sopt.practice.auth.UserAuthentication;
 import org.sopt.practice.service.dto.UserJoinResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,7 @@ public class JwtTokenProvider {
     private static final String USER_ID = "userId";
 
     //AccessToken 관련 로직
-    private static final Long ACCESS_TOKEN_EXPIRATION_TIME = 24 * 60 * 60 * 1000L * 14;
+    private static final Long ACCESS_TOKEN_EXPIRATION_TIME = 24 * 60 * 60 * 1000L * 2;
 
     @Value("${jwt.secret}") //application.yml 파일에 설정한 암호화 키를 가져옴
     private String JWT_SECRET;
@@ -83,4 +84,14 @@ public class JwtTokenProvider {
         Claims claims = getBody(token);
         return Long.valueOf(claims.get(USER_ID).toString());
     }
+
+    // 리프레시 토큰이 유효하면 새로운 access token 발급
+    public String newAccessToken(String refreshToken){
+        Claims claims = getBody(refreshToken);
+        Long userId = Long.valueOf(claims.get(USER_ID).toString());
+
+        Authentication authentication = UserAuthentication.createUserAuthentication(userId);
+        return issueAccessToken(authentication);
+    }
+
 }
